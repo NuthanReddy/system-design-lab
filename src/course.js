@@ -228,6 +228,52 @@ export const lessons = Object.fromEntries(topics.map(([id, title, summary, names
   },
 ]));
 
+// Branching dependencies must not be drawn as a pipeline through sibling services.
+const topology = {
+  'vertical-horizontal': [[0, 1], [1, 2], [1, 3]],
+  'load-balancing': [[0, 1], [1, 2], [1, 3]],
+  stateless: [[0, 1], [0, 2], [1, 3, 'read'], [2, 3, 'read']],
+  caching: [[0, 1], [1, 2], [2, 1, 'response'], [1, 3, 'miss'], [3, 1, 'response']],
+  'sql-nosql': [[0, 1], [0, 2], [1, 3, 'response'], [2, 3, 'response']],
+  indexes: [[0, 1], [1, 2, 'read'], [2, 3, 'response']],
+  replication: [[0, 1], [1, 2, 'write'], [1, 3, 'write']],
+  sharding: [[0, 1], [0, 2], [0, 3]],
+  'consistent-hashing': [[0, 1], [1, 2], [1, 3]],
+  'unique-ids': [[0, 1], [2, 1], [0, 3, 'write'], [2, 3, 'write']],
+  cap: [[0, 1], [1, 2, 'write'], [3, 2]],
+  consensus: [[0, 1], [1, 2, 'write'], [1, 3, 'write']],
+  transactions: [[0, 1, 'write'], [2, 1, 'write'], [1, 3, 'response']],
+  files: [[0, 1], [0, 2, 'write'], [2, 3, 'response'], [3, 0, 'response']],
+  queues: [[0, 1, 'write'], [1, 2], [1, 3]],
+  pubsub: [[0, 1, 'write'], [1, 2], [1, 3]],
+  realtime: [[0, 1], [1, 3], [3, 2, 'write'], [2, 1, 'response'], [1, 0, 'response']],
+  redundancy: [[0, 1], [1, 2], [1, 3]],
+  'rate-limiting': [[0, 1], [1, 3, 'read'], [1, 2]],
+  'timeouts-retries': [[0, 3], [3, 1], [1, 2]],
+  observability: [[0, 1], [1, 2, 'write'], [2, 3, 'response']],
+  microservices: [[0, 1], [1, 2], [1, 3]],
+  'service-discovery': [[0, 1, 'read'], [0, 2], [0, 3], [2, 1, 'write'], [3, 1, 'write']],
+  sagas: [[3, 0], [3, 1], [3, 2], [1, 3, 'response']],
+  authentication: [[0, 1], [1, 0, 'response'], [0, 2], [2, 3, 'read']],
+  authorization: [[0, 1], [1, 2], [1, 3, 'write']],
+  encryption: [[0, 1], [1, 2], [2, 3, 'read']],
+  'design-news-feed': [[0, 1, 'write'], [1, 2, 'write'], [3, 1], [2, 1, 'response']],
+  'design-chat': [[0, 1], [1, 2, 'write'], [1, 3, 'response'], [2, 1, 'response']],
+};
+for (const [id, edges] of Object.entries(topology)) {
+  for (const step of lessons[id].steps) {
+    step.edges = edges.map(([from, to, type = 'request']) => [`n${from}`, `n${to}`, type])
+      .filter(([from, to]) => step.visible.includes(from) && step.visible.includes(to));
+  }
+}
+lessons['request-lifecycle'].steps.forEach((step, i) => {
+  const edges = [[0, 1, 'request'], [1, 0, 'response']];
+  if (i >= 1) edges.push([0, 2, 'request']);
+  if (i >= 2) edges.push([2, 3, 'read'], [3, 2, 'response']);
+  if (i >= 3) edges.push([2, 0, 'response']);
+  step.edges = edges.map(([from, to, type]) => [`n${from}`, `n${to}`, type]);
+});
+
 const urlSteps = [
   ['The brief', 'Define a useful short link', 'Setup',
     ['A shortener stores a relationship between a compact code and a destination URL. Creating a link writes that relationship; following a link reads it and returns a redirect.',

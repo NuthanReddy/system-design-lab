@@ -46,6 +46,17 @@ test('all diagrams have finite geometry and meaningful accessible labels', () =>
   }
 });
 
+test('routing diagrams do not forward requests through DNS or sibling backends', () => {
+  const request = lessons['request-lifecycle'].steps.at(-1).edges;
+  assert.ok(request.some(([from, to]) => from === 'n0' && to === 'n2'));
+  assert.ok(!request.some(([from, to]) => from === 'n1' && to === 'n2'));
+  const balanced = lessons['load-balancing'].steps.at(-1).edges;
+  assert.ok(balanced.some(([from, to]) => from === 'n1' && to === 'n3'));
+  assert.ok(!balanced.some(([from, to]) => from === 'n2' && to === 'n3'));
+  const cache = lessons.caching.steps.at(-1).edges;
+  assert.ok(cache.some(([from, to, type]) => from === 'n1' && to === 'n3' && type === 'miss'));
+});
+
 test('route parsing clamps steps and safely resolves unknown routes', () => {
   assert.equal(resolveRoute('#/caching/3').index, 2);
   assert.equal(resolveRoute('#/caching/-8').index, 0);
