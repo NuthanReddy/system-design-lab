@@ -46,12 +46,13 @@ Open **http://127.0.0.1:4173/system-design-lab/** for the project-path preview. 
 - Forty lessons in nine chapters, with **172 original explanatory steps**, topic-specific diagrams, and a complete twelve-step URL shortener design.
 - Click a timeline step or use **← / →**. **Space** toggles diagram motion, **R** replays, and **Ctrl+K / Cmd+K** or **/** opens searchable lessons.
 - Search explanations as well as titles; use **↑ / ↓**, **Enter**, and **Esc** in the search dialog.
-- Inspect a diagram component by clicking it or pressing Enter when focused. Use **+**, **−**, and **Fit** to change diagram scale; drag the zoomed board to pan. With the board focused, **+ / − / 0** zoom or reset and arrow keys pan when zoomed.
-- Switch light/dark theme. At the final step, select **Complete lesson** to persist chapter and overall progress in the browser.
-- Narrow screens have a course drawer and stacked diagrams/explanations. Reduced-motion preferences start animations paused.
+- Inspect a diagram component by clicking it or pressing Enter when focused. Details explain its role and list the active incoming/outgoing paths. **What changed** identifies added/removed components and connections rather than repeating the key idea.
+- Expand the diagram into a full-screen modal. Use **+**, **−**, and **Fit** to change diagram scale up to 3×; drag the zoomed board to pan. With the board focused, **+ / − / 0** zoom or reset and arrow keys pan when zoomed. On phones, zoom buttons live inside the expanded view. **Esc** closes it and restores focus without restarting animation.
+- Switch light/dark theme. Reaching a lesson's final step records completion automatically and provides a **Next lesson** link, including across chapter boundaries.
+- Narrow screens have an accessible course drawer, stacked diagrams/explanations, and persistent **Back/Next** controls. Reduced-motion preferences start animations paused.
 - The interface supports **English, Spanish, and French**, including `?lang=es` and `?lang=fr`. Educational explanations are in English; the language menu explicitly states this.
 
-The course first opens on **Design a URL Shortener**, then remembers your last position. Direct links such as `/#/caching/3` select a lesson and step. Browser history navigates between steps. On phones, the reference-like compact header hides section tabs and language selection; `?lang=es` or `?lang=fr` still sets the interface language.
+The course first opens on **Design a URL Shortener**, then remembers your last position. Each lesson retains its own last step when reopened through search or the course tree; explicit deep links always select the requested step. Direct links such as `/#/caching/3` select a lesson and step. Browser history navigates between steps. The language picker remains available in the compact phone header; section tabs are hidden on phones.
 
 ## Scope and attribution
 
@@ -76,7 +77,7 @@ npm run build
 npm run test:e2e
 ```
 
-The browser suite runs desktop and mobile viewports using installed Microsoft Edge. To use Playwright's bundled Chromium instead, remove `channel: 'msedge'` from `playwright.config.js` and run `npx playwright install chromium`.
+The browser suite starts its own server on port 4177 (never reusing another app's server) and runs desktop and mobile viewports using installed Microsoft Edge. To use Playwright's bundled Chromium instead, remove `channel: 'msedge'` from `playwright.config.js` and run `npx playwright install chromium`.
 
 Tests cover all lesson routes and diagrams, timeline navigation, playback, persisted progress and themes, keyboard search, component inspection, zoom, localization, and mobile overflow.
 

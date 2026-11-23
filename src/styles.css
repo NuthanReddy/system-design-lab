@@ -147,6 +147,8 @@ h1 { font-size: clamp(20px, 1.65vw, 29px); line-height: 1.3; letter-spacing: -.0
 .zoom-controls button { font-size: 9px; padding: 4px 7px; }
 .component-note { position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%); max-width: 85%; background: var(--surface); box-shadow: 0 5px 20px #0002; border: 1px solid var(--line); border-radius: 8px; padding: 12px 40px 12px 14px; z-index: 5; }
 .component-note span { display: block; font-size: 10px; margin-top: 5px; }
+.component-note { width: min(560px, 85%); max-height: min(65%, 310px); overflow-y: auto; line-height: 1.7; }
+.component-note ul { padding-left: 16px; margin: 8px 0 0; font-size: 10px; }
 .component-note button { position: absolute; top: 5px; right: 5px; border: 0; }
 .timeline { border: 1px solid var(--line); border-radius: 9px; margin-top: 11px; padding: 12px 12px 14px; box-shadow: var(--shadow); background: var(--surface-soft); }
 .timeline > div { display: flex; justify-content: space-between; font-size: 8px; }
@@ -180,6 +182,10 @@ h2 { font-size: 16px; line-height: 1.5; margin: 0 0 10px; letter-spacing: -.025e
 .changes { margin-top: 16px; }
 .changes p { font-size: 9px; line-height: 1.7; }
 .changes p > span { display: inline-block; width: 12px; background: var(--green); text-align: center; border-radius: 2px; }
+.completion { color: var(--muted); display: flex; align-items: center; gap: 7px; margin-top: 16px; }
+.coming-up { border: 1px solid var(--line); border-radius: 7px; padding: 12px; margin-top: 12px; }
+.coming-up b { font-size: 9px; text-transform: uppercase; color: var(--muted); }
+.coming-up p { font-size: 10px; line-height: 1.7; margin: 6px 0 0; }
 .step-navigation { display: flex; gap: 8px; margin-top: 18px; }
 .step-navigation button { font-size: 10px; padding: 9px 10px; white-space: nowrap; }
 .step-navigation button.primary { flex: 1; justify-content: space-between; min-width: 0; white-space: normal; text-align: left; }
@@ -196,6 +202,9 @@ h2 { font-size: 16px; line-height: 1.5; margin: 0 0 10px; letter-spacing: -.025e
 .goal-check.checked .icon { visibility: visible; color: var(--ink); }
 dialog { padding: 0; border: 1px solid var(--line); color: var(--ink); background: var(--surface); border-radius: 12px; width: min(610px, calc(100% - 32px)); box-shadow: 0 20px 80px #0004; margin-top: min(15vh, 130px); }
 dialog::backdrop { background: #23211dcc; }
+body.diagram-expanded { overflow: hidden; }
+#diagram-dialog { width: calc(100% - 32px); max-width: none; height: calc(100dvh - 32px); max-height: none; margin: auto; }
+#diagram-dialog .simulation { height: 100%; min-height: 0; border: 0; border-radius: 11px; }
 .search-field { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .search-field input { width: 100%; background: transparent; border: 0; outline: none; color: inherit; font-size: 13px; }
 .search-field input::placeholder { color: var(--muted); }
@@ -264,18 +273,17 @@ dialog footer { padding: 10px 16px; border-top: 1px solid var(--line); font-size
   .progress { margin-top: auto; }
 }
 @media (max-width: 600px) {
-  .topbar { padding: 0 12px; gap: 8px; height: 56px; flex-wrap: nowrap; }
-  .brand { font-size: 19px; gap: 8px; }
-  .brand > .icon { width: 27px; height: 27px; }
+  .topbar { padding: 0 8px; gap: 6px; height: 56px; flex-wrap: nowrap; }
+  .brand { font-size: clamp(14px, 4vw, 18px); gap: 5px; }
+  .brand > .icon { width: 25px; height: 25px; }
   .sidebar { top: 56px; }
   .drawer-backdrop.shown { top: 56px; }
-  .language-control { display: none; }
-  .language-button { min-width: 43px; }
+  .language-button { min-width: 32px; }
   .language-button > .icon, .language-button .tiny { display: none; }
   .modes { display: none; }
   .modes button { padding: 7px 8px; font-size: 9px; gap: 5px; }
   .modes .icon { width: 13px; height: 13px; }
-  .workspace { padding: 8px; }
+  .workspace { padding: 8px 8px 80px; }
   .lesson-main { padding: 9px; border-radius: 10px; }
   .lesson-heading { padding: 4px 3px 11px; }
   .breadcrumb { font-size: 8px; }
@@ -290,16 +298,22 @@ dialog footer { padding: 10px 16px; border-top: 1px solid var(--line); font-size
   .readout > span { font-size: 7px; white-space: nowrap; line-height: 1.5; }
   .readout .icon { width: 9px; height: 9px; }
   .readout b { font-size: 10px; white-space: nowrap; line-height: 1.6; }
-  .playback { top: auto; bottom: 9px; right: 88px; }
+  .playback { top: auto; bottom: 9px; right: 46px; }
   .playback button { min-height: 32px; min-width: 32px; padding: 7px; }
   .playback span { display: none; }
   .playback .icon { width: 15px; height: 15px; }
   .diagram-viewport { top: 52px; bottom: 43px; }
   #system-diagram { width: 100%; flex-shrink: 0; }
-  .legend { bottom: 18px; left: 8px; gap: 10px; font-size: 8px; flex-wrap: nowrap; max-width: calc(100% - 164px); overflow: hidden; white-space: nowrap; }
+  .legend { bottom: 18px; left: 8px; gap: 10px; font-size: 8px; flex-wrap: nowrap; max-width: calc(100% - 126px); overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+  .legend > span { flex-shrink: 0; }
   .legend > span::before { width: 6px; height: 6px; margin-right: 3px; }
   .zoom-controls { right: 6px; bottom: 10px; }
   .zoom-controls button { min-height: 30px; padding: 4px 6px; }
+  .zoom-controls [data-zoom] { display: none; }
+  #diagram-dialog .zoom-controls [data-zoom] { display: inline-flex; }
+  #diagram-dialog .playback { right: 135px; }
+  #diagram-dialog .legend { bottom: 55px; max-width: calc(100% - 20px); }
+  #diagram-dialog .diagram-viewport { bottom: 76px; }
   .timeline { padding: 12px 6px 30px; }
   .timeline ol { display: flex; gap: 0; margin-top: 12px; }
   .timeline li::before { display: block; top: 10px; }
@@ -307,6 +321,8 @@ dialog footer { padding: 10px 16px; border-top: 1px solid var(--line); font-size
   .step-dot { width: 21px; height: 21px; }
   .step-label { display: none; }
   .active .step-label { display: block; position: absolute; top: 29px; left: 50%; transform: translateX(-50%); min-width: 75px; font-size: 9px; }
+  .timeline li:first-child .step-label { left: 0; transform: none; text-align: left; }
+  .timeline li:last-child .step-label { left: auto; right: 0; transform: none; text-align: right; }
   .guide { display: flex; flex-direction: column; margin-top: 8px; gap: 8px; }
   .step-card { padding: 16px; }
   h2 { font-size: 18px; }
@@ -314,7 +330,10 @@ dialog footer { padding: 10px 16px; border-top: 1px solid var(--line); font-size
   .idea p { font-size: 11px; }
   .goals li { font-size: 10px; }
   .step-navigation button { min-height: 42px; font-size: 11px; }
-  .language-menu { right: -38px; }
+  .step-navigation { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--page); border-top: 1px solid var(--line); box-shadow: 0 -4px 15px #493b2b0d; z-index: 16; }
+  .keyboard-hint { display: none; }
+  #notice { bottom: 78px; }
+  .language-menu { right: 0; }
   .component-note { width: 90%; font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {

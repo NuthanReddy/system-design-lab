@@ -2,7 +2,7 @@ import { escapeHtml as e, icon } from './icons.js';
 
 const colors = { blue: ['#d5e5f3', '#9bb9db'], green: ['#e0edcc', '#adc88e'], purple: ['#e1d6f0', '#b5a0d0'], gold: ['#f8e7bb', '#e5c478'], orange: ['#f5dac3', '#dfa77f'], rose: ['#f3d2df', '#d59bb4'] };
 const darkColors = { blue: ['#4a6279', '#293e51'], green: ['#57724d', '#354b2e'], purple: ['#65507f', '#44305d'], gold: ['#81724b', '#51432a'], orange: ['#886249', '#65432f'], rose: ['#83546d', '#58364a'] };
-const positions = { people: [210, 430], service: [455, 300], store: [645, 425], ids: [605, 115], cache: [270, 140], replica: [805, 510], queue: [800, 240], guard: [340, 375] };
+const positions = { people: [210, 430], service: [455, 300], store: [645, 425], ids: [605, 115], cache: [270, 140], replica: [770, 510], queue: [800, 240], guard: [300, 285] };
 const genericPositions = [[200, 405], [420, 290], [630, 170], [650, 410]];
 
 function person(x, y, color) {
@@ -42,11 +42,14 @@ export function diagram(lesson, step, index, theme = 'light') {
   const coords = Object.fromEntries(lesson.nodes.map((n, i) => [n.id, url ? positions[n.id] : genericPositions[i]]));
   if (url && index < 2) { coords.people = [355, 410]; coords.service = [575, 260]; }
   const gradients = Object.entries(theme === 'dark' ? darkColors : colors).map(([name, [top, side]]) => `<linearGradient id="${name}-top" x2=".6" y2="1"><stop stop-color="${top}"/><stop offset="1" stop-color="${side}"/></linearGradient><linearGradient id="${name}-side"><stop stop-color="${side}"/><stop offset=".5" stop-color="${top}"/><stop offset="1" stop-color="${side}"/></linearGradient>`).join('');
-  const edges = step.edges.map(([from, to, type], i) => {
+  const edges = step.edges.map((edge, i) => {
+    const [from, to, type] = edge;
     const a = coords[from], b = coords[to];
     const dx = b[0] - a[0], dy = b[1] - a[1], length = Math.hypot(dx, dy);
-    const start = [a[0] + dx / length * 78, a[1] + dy / length * 62];
-    const end = [b[0] - dx / length * 83, b[1] - dy / length * 63];
+    const parallel = step.edges.filter(([f, t]) => (f === from && t === to) || (f === to && t === from));
+    const offset = (parallel.indexOf(edge) - (parallel.length - 1) / 2) * 10 * (from < to ? 1 : -1);
+    const start = [a[0] + dx / length * 78 - dy / length * offset, a[1] + dy / length * 62 + dx / length * offset];
+    const end = [b[0] - dx / length * 83 - dy / length * offset, b[1] - dy / length * 63 + dx / length * offset];
     const d = `M${start[0]} ${start[1]}L${end[0]} ${end[1]}`;
     const hue = type === 'response' ? '#8ab775' : type === 'miss' ? '#dbba5b' : type === 'write' ? '#a38abf' : '#dfaa7d';
     return `<g><path id="flow-${i}" class="flow-line ${type}" d="${d}" stroke="var(--ink)" stroke-width="1.7" fill="none" marker-end="url(#arrowhead)"/>

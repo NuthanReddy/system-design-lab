@@ -322,27 +322,27 @@ const urlSteps = [
   ['Recap', 'Trace the finished system', 'Recap',
     ['Creation passes validation, obtains a unique code, and commits a durable mapping. Redirects check expiry, consult the cache, fall back to storage, and return the chosen HTTP response.',
       'Analytics flows through a queue. Storage has partitions and replicas. Capacity assumptions, failure behavior, and operational metrics complete the design.'],
-    'A design is complete when its successful and failing paths are both explainable.', ['people', 'service', 'store', 'ids', 'cache', 'replica', 'queue', 'guard'], [['people', 'guard', 'request'], ['guard', 'service', 'request'], ['service', 'cache', 'request'], ['service', 'store', 'miss'], ['store', 'replica', 'write'], ['service', 'queue', 'write']], ['Cache-first', 'Misses only', 'Unique IDs', 'Durable + replicas']],
+    'A design is complete when its successful and failing paths are both explainable.', ['people', 'service', 'store', 'ids', 'cache', 'replica', 'queue', 'guard'], [['people', 'guard', 'request'], ['guard', 'service', 'request'], ['service', 'ids', 'write'], ['service', 'store', 'write'], ['service', 'cache', 'request'], ['cache', 'service', 'response'], ['service', 'store', 'miss'], ['store', 'service', 'response'], ['service', 'people', 'response'], ['store', 'replica', 'write'], ['service', 'queue', 'write']], ['Cache-first', 'Misses only', 'Unique IDs', 'Durable + replicas']],
 ];
 lessons['design-url-shortener'] = {
   id: 'design-url-shortener', title: 'Design a URL Shortener', minutes: 14, difficulty: 'Intermediate',
   summary: 'Build a compact link service, one decision at a time — from the first request to a resilient read path.',
   nodes: [
-    { id: 'people', name: 'people clicking links', kind: 'people', color: 'blue' },
-    { id: 'service', name: 'Link API', subtitle: 'create · redirect', kind: 'server', color: 'blue' },
-    { id: 'store', name: 'Links table', subtitle: 'code → URL', kind: 'database', color: 'purple' },
-    { id: 'ids', name: 'ID blocks', subtitle: 'unique ranges', kind: 'server', color: 'gold' },
-    { id: 'cache', name: 'Cache', subtitle: 'code → URL', kind: 'server', color: 'green' },
-    { id: 'replica', name: 'Replica', subtitle: 'durable copy', kind: 'database', color: 'purple' },
-    { id: 'queue', name: 'Click events', subtitle: 'async analytics', kind: 'server', color: 'orange' },
-    { id: 'guard', name: 'Rate limiter', subtitle: 'abuse control', kind: 'server', color: 'rose' },
+    { id: 'people', name: 'people clicking links', detail: 'Clients create a link or follow a code. The redirect response tells the browser which destination to open.', kind: 'people', color: 'blue' },
+    { id: 'service', name: 'Link API', subtitle: 'create · redirect', detail: 'Validates creation, allocates a unique code, and persists its destination. For redirects, checks expiry and reads the cache before falling back to storage.', kind: 'server', color: 'blue' },
+    { id: 'store', name: 'Links table', subtitle: 'code → URL', detail: 'The durable source of truth for destinations, owners, and expiry. A uniqueness constraint prevents one code from overwriting another link.', kind: 'database', color: 'purple' },
+    { id: 'ids', name: 'ID blocks', subtitle: 'unique ranges', detail: 'Leases non-overlapping ranges to generators. Allocation must be durable before a server issues IDs from its range; unused gaps are acceptable.', kind: 'server', color: 'gold' },
+    { id: 'cache', name: 'Cache', subtitle: 'code → URL', detail: 'Keeps frequently read mappings in memory. A hit avoids a storage lookup; a miss falls back to the links table. Expiry and invalidation bound stale results.', kind: 'server', color: 'green' },
+    { id: 'replica', name: 'Replica', subtitle: 'durable copy', detail: 'Copies committed mappings into a separate failure domain. Replication lag and failover policy determine which writes survive a failure.', kind: 'database', color: 'purple' },
+    { id: 'queue', name: 'Click events', subtitle: 'async analytics', detail: 'Buffers click events for background aggregation, outside the redirect path. Retry and deduplication are needed if accounting must survive failures.', kind: 'server', color: 'orange' },
+    { id: 'guard', name: 'Rate limiter', subtitle: 'abuse control', detail: 'Bounds traffic from each client or account. URL validation, cheap negative lookups, and coordinated takedowns complement rate limits.', kind: 'server', color: 'rose' },
   ],
   steps: urlSteps.map(([label, title, tag, body, idea, visible, edges, metrics]) => ({ label, title, tag, body, idea, visible, edges, metrics, change: idea })),
   goals: ['Define capabilities and capacity', 'Generate collision-safe codes', 'Cache and redirect correctly', 'Partition and replicate records', 'Separate analytics and abuse controls'],
 };
 
 export function resolveRoute(hash) {
-  const [id, rawStep] = hash.replace(/^#\/?/, '').split('/');
+  const [id, rawStep] = hash.replace(/^#?\/?/, '').split('/');
   const lesson = lessons[id] || lessons['design-url-shortener'];
   const step = Number(rawStep);
   return { lesson, index: Number.isInteger(step) ? Math.max(0, Math.min(lesson.steps.length - 1, step - 1)) : 0 };
@@ -350,4 +350,24 @@ export function resolveRoute(hash) {
 
 export function chapterFor(id) {
   return chapters.find(chapter => chapter.lessons.includes(id));
+}
+
+export function stepChanges(lesson, index) {
+  if (!index) return [];
+  const previous = lesson.steps[index - 1], current = lesson.steps[index];
+  const name = id => lesson.nodes.find(node => node.id === id).name;
+  const changes = [];
+  const added = current.visible.filter(id => !previous.visible.includes(id));
+  const removed = previous.visible.filter(id => !current.visible.includes(id));
+  if (added.length) changes.push(`Added components: ${added.map(name).join(', ')}.`);
+  if (removed.length) changes.push(`Removed components: ${removed.map(name).join(', ')}.`);
+  const edgeKey = edge => edge.join(':');
+  const describe = ([from, to, type]) => `${name(from)} → ${name(to)} (${type})`;
+  const newPaths = current.edges.filter(edge => !previous.edges.some(old => edgeKey(old) === edgeKey(edge)));
+  const removedPaths = previous.edges.filter(edge => !current.edges.some(next => edgeKey(next) === edgeKey(edge)));
+  if (newPaths.length) changes.push(`Added paths: ${newPaths.map(describe).join('; ')}.`);
+  if (removedPaths.length) changes.push(`Removed paths: ${removedPaths.map(describe).join('; ')}.`);
+  if (current.metrics?.some((value, i) => value !== previous.metrics?.[i])) changes.push('Updated workload estimates and design decisions in the metric strip.');
+  if (!changes.length) changes.push(`Topology unchanged. Focus: ${current.title}.`);
+  return changes;
 }

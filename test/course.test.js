@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chapters, lessons, resolveRoute, chapterFor } from '../src/course.js';
+import { chapters, lessons, resolveRoute, chapterFor, stepChanges } from '../src/course.js';
 import { diagram } from '../src/diagram.js';
 
 test('all forty course entries have original, navigable walkthroughs', () => {
@@ -34,6 +34,21 @@ test('URL shortener evolves from a brief to a complete, eight-component system',
   assert.match(svg, /Rate limiter/);
   assert.match(svg, /Click events/);
   assert.doesNotMatch(svg, /NaN|undefined/);
+  const recap = lesson.steps.at(-1);
+  for (const [from, to] of [['service', 'ids'], ['service', 'store'], ['cache', 'service'], ['store', 'service'], ['service', 'people']]) {
+    assert.ok(recap.edges.some(edge => edge[0] === from && edge[1] === to), `${from} → ${to} is traceable in recap`);
+  }
+});
+
+test('step changes describe actual diagram differences without repeating the key idea', () => {
+  const lesson = lessons['design-url-shortener'];
+  const cache = stepChanges(lesson, 6).join(' ');
+  assert.match(cache, /Added components: Cache/);
+  assert.match(cache, /Cache → Link API \(response\)/);
+  assert.match(cache, /Removed paths:/);
+  assert.notEqual(cache, lesson.steps[6].idea);
+  assert.match(stepChanges(lessons['load-balancing'], 4).join(' '), /Topology unchanged. Focus: Avoid a single point/);
+  assert.deepEqual(stepChanges(lesson, 0), []);
 });
 
 test('all diagrams have finite geometry and meaningful accessible labels', () => {
@@ -59,6 +74,8 @@ test('routing diagrams do not forward requests through DNS or sibling backends',
 
 test('route parsing clamps steps and safely resolves unknown routes', () => {
   assert.equal(resolveRoute('#/caching/3').index, 2);
+  assert.equal(resolveRoute('/caching/3').lesson.id, 'caching');
+  assert.equal(resolveRoute('/caching/3').index, 2);
   assert.equal(resolveRoute('#/caching/-8').index, 0);
   assert.equal(resolveRoute('#/caching/999').index, 4);
   assert.equal(resolveRoute('#/caching/2.4').index, 0);
