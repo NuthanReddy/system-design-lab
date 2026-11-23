@@ -24,7 +24,22 @@ npm run build
 npm run preview
 ```
 
-`dist/` contains the static site. There is no backend, hosted deployment, analytics, or external API dependency. Hash-based lesson links work on ordinary static hosting.
+`dist/` contains the static site. There is no backend, analytics, or external API dependency. Hash-based lesson links work on ordinary static hosting.
+
+## GitHub Pages
+
+The public repository deploys to **https://nuthanreddy.github.io/system-design-lab/** through `.github/workflows/pages.yml`. Every push to `main` checks the original lesson content, builds the project site, and publishes the Pages artifact.
+
+GitHub Pages must use **GitHub Actions** as its build source in the repository's **Settings > Pages**. The workflow builds with `/system-design-lab/` as the asset base so scripts, fonts, CSS, and icons resolve under the repository path rather than the domain root.
+
+To reproduce that build locally:
+
+```sh
+npm run build -- --base=/system-design-lab/
+npm run preview -- --base=/system-design-lab/
+```
+
+Open **http://127.0.0.1:4173/system-design-lab/** for the project-path preview. The ordinary development command still serves at the root.
 
 ## Explore
 
@@ -49,7 +64,7 @@ Compared with the reference:
 - Interface localization covers three languages, not the reference's twenty-one fully localized courses.
 - **Practice**, **Design Lab**, and **Cheatsheets** display a coming-soon notice, matching their observed behavior on the live reference.
 - The metrics shown in diagrams are explicitly illustrative estimates, not measurements of a production shortener.
-- No deployment has been performed.
+- GitHub Pages publishes the static course only; no URL-shortening backend is deployed.
 
 The code and original educational content are available under [MIT](LICENSE). JetBrains Mono is installed from `@fontsource/jetbrains-mono` and distributed under the SIL Open Font License; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
